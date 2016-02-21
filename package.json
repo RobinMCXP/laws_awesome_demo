@@ -1,0 +1,20 @@
+{
+  "name": "laws_montage_lambda",
+  "version": "0.0.1",
+  "description": "Server for the lambda demo on the LAWS",
+  "main": "app.js",
+  "dependencies": {
+    "async": "^1.5.2",
+    "aws-sdk": "^2.2.35",
+    "express": "^4.13.4",
+    "gm": "^1.21.1",
+    "moment": "^2.11.2",
+    "simple-imagemagick": "^0.2.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js"
+  },
+  "author": "RobinM",
+  "license": "ISC"
+}

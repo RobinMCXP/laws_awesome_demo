@@ -1,0 +1,184 @@
+
+ <html>
+	<head>
+		<title>Awesome Lambda Demo!</title>
+		<script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+		<style type="text/css">
+			h1 {
+				font-size: 80px;
+			}
+			h2 {
+				font-size: 70px;
+			}
+			#fake-uploader {
+				font-size: 50px;
+			}
+			#progress-number {
+				font-size: 70px;
+			}
+			.loader {
+			  height: 60px;
+			  width: 60px;
+			  margin: 94px auto 0 auto;
+			  position: relative;
+			  -webkit-animation: rotation .6s infinite linear;
+			  -moz-animation: rotation .6s infinite linear;
+			  -o-animation: rotation .6s infinite linear;
+			  animation: rotation .6s infinite linear;
+			  border-left: 6px solid rgba(0, 174, 239, 0.15);
+			  border-right: 6px solid rgba(0, 174, 239, 0.15);
+			  border-bottom: 6px solid rgba(0, 174, 239, 0.15);
+			  border-top: 6px solid rgba(0, 174, 239, 0.8);
+			  border-radius: 100%;
+			}
+			@-webkit-keyframes rotation {
+			  from {
+			    -webkit-transform: rotate(0deg);
+			  }
+			  to {
+			    -webkit-transform: rotate(359deg);
+			  }
+			}
+			@-moz-keyframes rotation {
+			  from {
+			    -moz-transform: rotate(0deg);
+			  }
+			  to {
+			    -moz-transform: rotate(359deg);
+			  }
+			}
+			@-o-keyframes rotation {
+			  from {
+			    -o-transform: rotate(0deg);
+			  }
+			  to {
+			    -o-transform: rotate(359deg);
+			  }
+			}
+			@keyframes rotation {
+			  from {
+			    transform: rotate(0deg);
+			  }
+			  to {
+			    transform: rotate(359deg);
+			  }
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Awesome Lambda Demo!</h1>
+		<div>
+			<h2>Upload your photo</h2>
+			<div id="signature-loader" class="loader"></div>
+			<div id="upload-container" style="display: none;">
+				<input type="file" id="file" name="file" style="display: none;">
+				<button id="fake-uploader">Choose File</button>
+			</div>
+			<div id="progress-number"></div>
+		</div>
+		<div class="posterContainer">
+			<h2>See the magic</h2>
+			<div id="mosaic-loader" class="loader"></div>
+			<div id="magic-result"><div id="image-container"></div></div>
+		</div>
+	</body>
+	<script type="text/javascript">
+
+	 	var params = {};
+	 	var serverUrl = 'Endpoint API Gateway';
+	 	var imageRefreshTimeout = 10000;
+
+		$(document).ready(function() {
+
+			$.get(serverUrl + '/getSignature', function (data) {
+				params = {
+					filename: data.filename,
+					accessKey: data.accessKey,
+					policy: data.policy,
+					signature: data.signature
+				};
+				$('#signature-loader').hide();
+				$('#upload-container').fadeIn();
+			});
+
+			$('#fake-uploader').click(function () {
+				$('#file').click();
+			});
+
+			$('#file').change(uploadFile);
+
+			getMontage();
+			setInterval(getMontage, imageRefreshTimeout);
+
+		});
+
+		function getMontage() {
+			$.get(serverUrl + '/getMozaic', function (data) {
+				var imageResult = $('#magic-result');
+				imageResult.fadeOut(function () {
+					$('#image-container').remove();
+					$('<div id="image-container">').appendTo(imageResult);
+					$('<img src="' + data.img + '"/>').appendTo('#image-container');
+					imageResult.fadeIn();
+				});
+				$('#mosaic-loader').remove();
+			});
+		}
+
+		function uploadFile() {
+	    var file = document.getElementById('file').files[0];
+	    var fd = new FormData();
+
+	    var key = params.fileName;
+
+	    fd.append('key', key);
+	    fd.append('acl', 'private');
+	    fd.append('Content-Type', 'image');
+	    fd.append('AWSAccessKeyId', params.accessKey);
+	    fd.append('policy', params.policy)
+	    fd.append('signature', params.signature);
+
+	    fd.append('file', file);
+
+			var xhttp = new XMLHttpRequest();
+
+	    xhttp.upload.addEventListener('progress', uploadProgress, false);
+	    xhttp.addEventListener('load', uploadComplete, false);
+	    xhttp.addEventListener('error', uploadFailed, false);
+	    xhttp.addEventListener('abort', uploadCanceled, false);
+
+	    xhttp.open('POST', 'https://[YOUR BUCKET NAME].s3.amazonaws.com/', true);
+
+	    xhttp.send(fd);
+	    clickSubmit();
+	  }
+
+	  function clickSubmit() {
+			$('#upload-container').hide();
+			$('#progress-number').text('Uploading... 0%');
+		}
+
+	  function uploadProgress(evt) {
+	    if (evt.lengthComputable) {
+	      var percentComplete = Math.round(evt.loaded * 100 / evt.total);
+	      $('#progress-number').text('Uploading... ' + percentComplete.toString() + '%');
+	    } else {
+	      $('#progress-number').text('Uploading...');
+	    }
+	  }
+
+	  function uploadComplete(evt) {
+	  	$('#progress-number').text('Upload complete!');
+	  	setTimeout(getMontage, 1000);
+	  }
+
+	  function uploadFailed(evt) {
+	  	$('#progress-number').text('Upload failed!');
+	  }
+
+	  function uploadCanceled(evt) {
+	  	$('#progress-number').text('Upload canceled!');
+	  }
+
+	</script>
+</html>
